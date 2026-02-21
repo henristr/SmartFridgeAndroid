@@ -1,19 +1,22 @@
 package com.smartfridge.android
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.webkit.*
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import android.widget.EditText
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var prefs: android.content.SharedPreferences
 
-    // Runtime-Permissions für Kamera
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -24,18 +27,18 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+
         webView = WebView(this)
         setContentView(webView)
 
-        // JavaScript aktivieren
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.mediaPlaybackRequiresUserGesture = false
 
-        // WebViewClient, damit Links in der WebView bleiben
         webView.webViewClient = WebViewClient()
 
-        // WebChromeClient für Kamera/Mikrofon
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
                 runOnUiThread {
@@ -44,7 +47,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Kamera-Berechtigung prüfen
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(
                     this,
@@ -55,8 +57,39 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Hier die URL deiner Website eintragen
-        webView.loadUrl("https://fridge.henristr.de")
+        checkDomain()
+    }
+
+    private fun checkDomain() {
+        val savedDomain = prefs.getString("domain", null)
+
+        if (savedDomain == null) {
+            askForDomain()
+        } else {
+            webView.loadUrl(savedDomain)
+        }
+    }
+
+    private fun askForDomain() {
+        val input = EditText(this)
+        input.hint = "https://example.com"
+
+        AlertDialog.Builder(this)
+            .setTitle("Domain eingeben")
+            .setMessage("Bitte gib die Domain deiner SmartFridge Website ein:")
+            .setView(input)
+            .setCancelable(false)
+            .setPositiveButton("Speichern") { _, _ ->
+                var domain = input.text.toString().trim()
+
+                if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
+                    domain = "https://$domain"
+                }
+
+                prefs.edit().putString("domain", domain).apply()
+                webView.loadUrl(domain)
+            }
+            .show()
     }
 
     override fun onBackPressed() {
