@@ -2,7 +2,9 @@ package com.smartfridge.android
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.webkit.*
@@ -79,6 +81,7 @@ class MainActivity : AppCompatActivity() {
             .setMessage("Bitte gib die Domain deiner SmartFridge Website ein:")
             .setView(input)
             .setCancelable(false)
+
             .setPositiveButton("Speichern") { _, _ ->
                 var domain = input.text.toString().trim()
 
@@ -89,6 +92,15 @@ class MainActivity : AppCompatActivity() {
                 prefs.edit().putString("domain", domain).apply()
                 webView.loadUrl(domain)
             }
+
+            .setNeutralButton("Ich habe noch keine laufende Installation") { _, _ ->
+                val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://github.com/henristr/SmartFridgePWA")
+                )
+                startActivity(intent)
+            }
+
             .show()
     }
 
