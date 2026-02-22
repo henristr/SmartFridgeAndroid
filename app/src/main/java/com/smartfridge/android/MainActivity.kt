@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
             .setNeutralButton("Ich habe noch keine laufende Installation") { _, _ ->
                 val intent = Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/henristr/SmartFridgePWA")
+                    Uri.parse("https://smartfridge.henristr.de")
                 )
                 startActivity(intent)
             }
